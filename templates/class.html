@@ -1,0 +1,30 @@
+{% extends "base.html" %}
+{% block title %}Klasse {{ class_name }}{% endblock %}
+{% block content %}
+    <h2>Lehrer*innen in Klasse {{ class_name }}</h2>
+  <input class="form-control mb-3" id="filterInput" onkeyup="filterTable()" placeholder="🔍 Filter...">
+
+    <script>
+    function filterTable() {
+    const input = document.getElementById("filterInput").value.toLowerCase();
+    const rows = document.querySelectorAll("table tbody tr");
+    rows.forEach(row => {
+        const text = row.innerText.toLowerCase();
+        row.style.display = text.includes(input) ? "" : "none";
+    });
+    }
+    </script>
+
+  <table class="table table-striped">
+    <tr><th>Lehrer*in</th><th>Fach</th><th>Stunden</th></tr>
+    {% for row in table %}
+      <tr>
+        <td>{{ row['Lehrer'] }}</td>
+        <td>{{ row['Fach'] }}</td>
+        <td>{{ row['Std'] }}</td>
+      </tr>
+    {% endfor %}
+  </table>
+  <a class="btn btn-sm btn-outline-primary mb-3" href="{{ url_for('export_class_csv', cls=class_name) }}">⬇️ Export CSV</a>
+  <a class="btn btn-sm btn-outline-secondary mb-3" href="{{ url_for('index') }}">← Back</a>
+{% endblock %}

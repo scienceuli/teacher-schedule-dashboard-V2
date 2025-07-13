@@ -1,0 +1,46 @@
+{% extends "base.html" %}
+{% block title %}Klassenübersicht{% endblock %}
+
+{% block style %}
+<style>
+  td:nth-child(6n+1),
+td:nth-child(6n+2),
+td:nth-child(6n+3),
+th:nth-child(6n+1),
+th:nth-child(6n+2),
+th:nth-child(6n+3) {
+  background-color: #f8f9fa; /* gray */
+}
+</style>
+{% endblock %}
+
+{% block content %}
+
+  <h2 class="mb-4">Teacher-Class Summary Table</h2>
+
+  <a href="{{ url_for('export_summary_csv') }}" class="btn btn-primary mb-3">Download CSV</a>
+
+  <div class="table-responsive">
+    <table class="table table-bordered table-sm align-middle text-nowrap">
+    
+        <thead>
+        <tr>
+          {% for col in table.columns %}
+            <th>{{ col }}</th>
+          {% endfor %}
+        </tr>
+      </thead>
+      <tbody>
+        {% for _, row in table.iterrows() %}
+          <tr>
+            {% for val in row %}
+              <td>{{ val }}</td>
+            {% endfor %}
+          </tr>
+        {% endfor %}
+      </tbody>
+
+    </table>
+  </div>
+  
+{% endblock %}

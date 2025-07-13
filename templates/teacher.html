@@ -1,0 +1,42 @@
+{% extends "base.html" %}
+{% block title %}{{ teacher_name }}{% endblock %}
+{% block content %}
+  <h2>Klassen von {{ teacher_name }}</h2>
+  <table class="table table-striped">
+    <tr><th>Klasse</th><th>Fach</th><th>Stunden</th></tr>
+    {% for row in table %}
+      <tr>
+        <td>{{ row['Class'] }}</td>
+        <td>{{ row['Subject'] }}</td>
+        <td>{{ row['Lessons'] }}</td>
+      </tr>
+    {% endfor %}
+      <tr class="table-info">
+        <td><strong>Summe</strong></td>
+        <td></td>
+        <td><strong>{{ total }}</strong></td>
+      </tr>
+      <tr class="table-info">
+        <td>Deputat</td>
+        <td></td>
+        <td> {{ load['Deputat 24/25']}}</td>
+      </tr>
+      <tr class="table-info">
+        <td>Anrechnung</td>
+        <td></td>
+        <td> {{ load['Anr']}}</td>
+      </tr>
+      <tr class="table-info">
+        <td>Bonus</td>
+        <td></td>
+        <td> {{ load['Bonus']}}</td>
+      </tr>
+      <tr class="{% if compare.delta < 0 %}table-danger{% elif compare.delta > 0 %}table-success{% else %}table-warning{% endif %}">
+        <td>Saldo</td>
+        <td></td>
+        <td> {{ compare.delta }}</td>
+      </tr>
+  </table>
+  <a class="btn btn-sm btn-outline-primary mb-3" href="{{ url_for('export_teacher_csv', name=teacher_name) }}">⬇️ Export CSV</a>
+  <a class="btn btn-sm btn-outline-secondary mb-3" href="{{ url_for('index') }}">← Back</a>
+{% endblock %}

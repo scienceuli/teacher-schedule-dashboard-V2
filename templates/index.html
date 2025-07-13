@@ -1,0 +1,30 @@
+{% extends "base.html" %}
+{% block title %}Übersicht{% endblock %}
+{% block content %}
+
+    <h1 class="mb-4">📘 Teacher Dashboard</h1>
+    
+    <div class="row">
+      <div class="col-md-6">
+        <h3>🔎 Browse by Class</h3>
+        <ul class="list-group">
+          {% for cls in classes %}
+            <li class="list-group-item">
+              <a href="{{ url_for('show_class', cls=cls) }}">{{ cls }}</a>
+            </li>
+          {% endfor %}
+        </ul>
+      </div>
+
+      <div class="col-md-6">
+        <h3>👩‍🏫 Browse by Teacher</h3>
+        <ul class="list-group">
+          {% for t in teachers %}
+            <li class="list-group-item">
+              <a href="{{ url_for('show_teacher', name=t) }}">{{ t }}</a>
+            </li>
+          {% endfor %}
+        </ul>
+      </div>
+    </div>
+  {% endblock %}
