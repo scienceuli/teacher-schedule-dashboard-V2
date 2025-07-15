@@ -1,47 +1,45 @@
 import os
 import io
 import csv
+from dotenv import load_dotenv
+
 from flask import send_file, Response, request, redirect, url_for, flash
 from flask import Flask, render_template
 from werkzeug.utils import secure_filename
 import pandas as pd
-from schedule import TeacherSchedule
+from project.schedule import TeacherSchedule
+from project.utils import get_file, allowed_file, create_folder
+
+load_dotenv()
 
 app = Flask(__name__)
 app.secret_key = os.getenv("SECRET_KEY")
 
-ts = None
+project_path = os.path.dirname(os.path.realpath(__file__))
+print(f"Project path: {project_path}")
+print(f"UPLOAD_FOLDER: {os.getenv('UPLOAD_FOLDER')}")
 
+upload_folder = os.path.join(project_path, os.getenv("UPLOAD_FOLDER"))
+app.config["UPLOAD_FOLDER"] = upload_folder
 
-DEFAULT_EXCEL_PATH = os.getenv("DEFAULT_EXCEL_PATH")
-UPLOAD_FOLDER = "data"
 ALLOWED_EXTENSIONS = {"xls", "xlsx"}
 
-app.config["UPLOAD_FOLDER"] = UPLOAD_FOLDER
-os.makedirs(UPLOAD_FOLDER, exist_ok=True)
+create_folder(upload_folder)
 
+excel_file = get_file(upload_folder, ALLOWED_EXTENSIONS)
+print(f"Excel file: {excel_file}")
 
-def allowed_file(filename):
-    return "." in filename and filename.rsplit(".", 1)[1].lower() in ALLOWED_EXTENSIONS
-
-
-def init_teacher_schedule(filepath=None):
-    if filepath and os.path.exists(filepath):
-        ts = TeacherSchedule(filepath)
-    elif DEFAULT_EXCEL_PATH and os.path.exists(DEFAULT_EXCEL_PATH):
-        ts = TeacherSchedule(DEFAULT_EXCEL_PATH)
-    else:
-        ts = None
-        print("⚠️ No valid Excel file found.")
-    return ts
-
-
-# init TeacherSchedule instance
-ts = init_teacher_schedule()
+if excel_file:
+    ts = TeacherSchedule(excel_file)
+    print(f"Loaded Excel from: {excel_file}")
+else:
+    ts = None
+    print("⚠️ No Excel file found. Waiting for upload.")
 
 
 @app.route("/")
 def index():
+    global ts
     if not ts:
         flash("No valid Excel file loaded. Please upload one.", "warning")
         return redirect(url_for("upload_file"))
@@ -52,14 +50,15 @@ def index():
 
 @app.route("/upload", methods=["GET", "POST"])
 def upload_file():
+    global ts
     if request.method == "POST":
         file = request.files.get("file")
-        if file and allowed_file(file.filename):
+        if file and allowed_file(file.filename, ALLOWED_EXTENSIONS):
             filename = secure_filename(file.filename)
             filepath = os.path.join(app.config["UPLOAD_FOLDER"], filename)
             file.save(filepath)
 
-            init_teacher_schedule(filepath)
+            ts = TeacherSchedule(filepath)
             flash("Upload successful!", "success")
             return redirect(url_for("index"))
         else:
@@ -203,6 +202,21 @@ def export_summary_csv():
         mimetype="text/csv",
         as_attachment=True,
         download_name="teacher_class_summary.csv",
+    )
+
+@app.route("/export/schedule.csv")
+def export_schedule_csv():
+    long_df = ts.get_teacher_schedule_long()  # Your method to get long format DataFrame
+
+    # Convert DataFrame to CSV string
+    csv_buffer = io.StringIO()
+    long_df.to_csv(csv_buffer, index=False)
+
+    # Create a Flask Response with CSV
+    return Response(
+        csv_buffer.getvalue(),
+        mimetype="text/csv",
+        headers={"Content-disposition": "attachment; filename=teacher_schedule.csv"}
     )
 
 

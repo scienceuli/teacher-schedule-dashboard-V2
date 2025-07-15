@@ -2,7 +2,9 @@ import pandas as pd
 import json
 from collections import defaultdict
 
-from utils import is_valid_teacher
+from project.utils import is_valid_teacher
+
+
 
 
 class TeacherSchedule:
@@ -259,3 +261,42 @@ class TeacherSchedule:
             rows.append(load)
 
         return rows
+    
+    def get_teacher_schedule_long(self):
+        rows = []
+        df = self.df.copy()
+
+        # Index contains teacher names
+        teacher_names = df.index
+
+
+        # Get all class names by scanning second-level column headers
+        class_names = sorted(set([col[0] for col in df.columns if col[1] == "Fach"]))
+
+        for teacher in teacher_names:
+            row = df.loc[teacher]
+
+            for cls in class_names:
+                fach_col = (cls, "Fach")
+                std_col = (cls, "Std")
+
+                if fach_col not in df.columns or std_col not in df.columns:
+                    continue
+
+                fach = row.get(fach_col)
+                stunden = row.get(std_col)
+
+                if pd.notna(stunden):
+                    rows.append({
+                        "Lehrer": teacher,
+                        "Klasse": cls,
+                        "Fach": fach,
+                        "Stunden": stunden,
+                    })
+
+        return pd.DataFrame(rows)
+    
+
+    
+
+
