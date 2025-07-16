@@ -2,15 +2,24 @@ import pandas as pd
 import json
 from collections import defaultdict
 
-from project.utils import is_valid_teacher
-
-
+from project.utils import is_valid_teacher, remove_long_name
 
 
 class TeacherSchedule:
     def __init__(self, excel_path, data_start_row=5):
+        # class teacher and deputy data
         self.df = pd.read_excel(excel_path, header=[0, 1])
         self.df = self.df.iloc[data_start_row:].copy()
+        # self.main_teachers_row = pd.read_excel(excel_path, header=None).iloc[2]
+        # self.deputy_teachers_row = pd.read_excel(excel_path, header=None).iloc[3]
+        self.raw_df = pd.read_excel(excel_path, header=None)
+
+        # print("main teachers row:\n", self.main_teachers_row)
+        # self.main_teachers_row = raw_df.iloc[2] 
+        # self.deputy_teachers_row = raw_df.iloc[3] 
+        # self.df = raw_df.iloc[data_start_row:].copy()
+        # self.df = pd.read_excel(excel_path, header=[0, 1], skiprows=data_start_row - 1)
+        # self.df = pd.read_excel(excel_path, header=[0, 1], skiprows=data_start_row - 1)
         self.fach_std_translate = {
             "Fach": "Fach",
             "5std LF": "Fach",
@@ -23,10 +32,19 @@ class TeacherSchedule:
         self._normalize_headers()
         self._remove_non_teacher_rows()
         self.teaching_loads = self._extract_teacher_meta()
+        self.class_teachers = self._extract_class_teachers()
         self._remove_non_class_columns()
         self._standardize_columns()
         self.class_columns = self._extract_class_columns()
         print("class columns:\n", self.class_columns)
+
+    def _get_excel_col_index(self, col_tuple):
+        """Find the original Excel column index for a given MultiIndex column."""
+        # Look in the first two rows of raw_df for matching headers
+        for i, (lvl0, lvl1) in enumerate(zip(self.raw_df.iloc[0], self.raw_df.iloc[1])):
+            if str(lvl0).strip() == col_tuple[0] and str(lvl1).strip() == col_tuple[1]:
+                return i
+        raise ValueError(f"Column {col_tuple} not found in raw_df headers.")
 
     def _clean_headers(self):
         # Drop columns where BOTH the main header and subheader are blank or NaN
@@ -44,9 +62,7 @@ class TeacherSchedule:
             ),
         ]
         # Drop columns where subheader is 'Std.1'
-        self.df = self.df.loc[
-            :, ~self.df.columns.get_level_values(1).str.contains(r"^Std\.\d+$")
-        ]
+        self.df = self.df.loc[:, ~self.df.columns.get_level_values(1).str.contains(r"^Std\.\d+$")]
 
         seen = defaultdict(list)
 
@@ -116,16 +132,42 @@ class TeacherSchedule:
     def _extract_teacher_meta(self):
         # Extract specific columns from original DataFrame
         cols = [("Deputat 24/25", ""), ("Anr", "Std"), ("Bonus", "")]
-        print("cols:\n", self.df.columns)
-        available = [col for col in self.df.columns if col in cols]
+        # print("cols:\n", self.df.columns)
+        available = [col for col in self.df.columns if col in cols or col[0].startswith("Sonderaufgaben")]
         if not available:
             return pd.DataFrame()
-        print("teacher meta:\n", self.df[available].rename(columns=lambda x: x[0]))
+        # print("teacher meta:\n", self.df[available].rename(columns=lambda x: x[0]))
 
         return (
-            self.df[available].rename(columns=lambda x: x[0]).fillna(0)
+            self.df[available].rename(columns=lambda x: remove_long_name(x[0])).fillna(0)
         )  # Flatten to single-level
 
+    
+    def _extract_class_teachers(self):
+        class_teachers = {}
+        # Columns from the actual data table (e.g., ('5a', 'Fach'), ...)
+        class_cols = [col for col in self.df.columns if col[1] == 'Fach']
+        
+        for col in class_cols:
+            col_idx = self._get_excel_col_index(col)  # We'll define this next
+
+            # Fetch main and deputy teachers from row 3 and 4 (raw_df)
+            main_teacher = self.raw_df.iloc[2, col_idx]
+            deputy_teachers = self.raw_df.iloc[3, col_idx]
+
+            class_name = col[0]
+            deputies = [
+                d.strip() for d in str(deputy_teachers).split(",") if d.strip()
+            ] if pd.notna(deputy_teachers) else []
+
+            class_teachers[class_name] = {
+                "main": str(main_teacher).strip() if pd.notna(main_teacher) else None,
+                "deputies": deputies
+            }
+
+        return class_teachers
+
+    
     def get_df(self, reset_index=False):
         if reset_index:
             df_copy = self.df.copy()
@@ -134,7 +176,7 @@ class TeacherSchedule:
 
     def get_teaching_load(self, teacher):
         """
-        Return a dict with {'Deputat 24/25': ..., 'Anr': ..., 'Bonus': ...}
+        Return a dict with {'Deputat 24/25': ..., 'Anr': ..., 'Bonus': ..., 'Sonderuafgaben': ...}
         """
         if teacher not in self.teaching_loads.index:
             return {}

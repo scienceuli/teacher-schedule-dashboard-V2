@@ -71,7 +71,16 @@ def upload_file():
 @app.route("/class/<cls>")
 def show_class(cls):
     records = ts.get_teachers_in_class(cls)
-    return render_template("class.html", class_name=cls, table=records)
+    main_teachers_for_class = ts.class_teachers.get(cls, {})
+    main_teacher = main_teachers_for_class.get("main")
+    deputies = main_teachers_for_class.get("deputies", [])
+    return render_template(
+        "class.html", 
+        class_name=cls, 
+        table=records,
+        main_teacher=main_teacher,
+        deputies=deputies,
+    )
 
 
 @app.route("/teacher/<name>")
@@ -96,8 +105,10 @@ def show_teacher_load(name):
 
     # Optional: enrich with anr and bonus separately
     meta = ts.get_teaching_load(name)
+    data["dep"] = meta.get("Deputat 24/25", 0)
     data["anr"] = meta.get("Anr", 0)
     data["bonus"] = meta.get("Bonus", 0)
+    data["sonderaufgaben"] = meta.get("Sonderaufgaben", '')
 
     return render_template("teacher_load.html", data=data)
 

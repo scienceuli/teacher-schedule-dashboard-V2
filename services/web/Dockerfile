@@ -12,10 +12,13 @@ COPY --from=ghcr.io/astral-sh/uv:latest /uv /uvx /bin/
 WORKDIR /usr/src/app
 
 # Copy only dependency files first for better Docker cache utilization
-COPY pyproject.toml uv.lock /usr/src/app/
+#COPY pyproject.toml uv.lock /usr/src/app/
 
 # Install dependencies using uv
-RUN uv sync --no-dev
+#RUN uv sync --locked
+RUN pip install --upgrade pip
+COPY ./requirements.txt /usr/src/app/requirements.txt
+RUN pip install -r requirements.txt
 
 # Now copy the rest of the application code
 COPY . /usr/src/app
@@ -25,7 +28,7 @@ COPY . /usr/src/app
 # ENV FLASK_APP=app.py
 
 # Expose port 5000 for the application
-EXPOSE 5050
+# EXPOSE 5050
 
 # Start the application using gunicorn through uv
 # CMD ["uv", "run", "gunicorn", "-w", "2", "-b", "0.0.0.0", "app:app"]
