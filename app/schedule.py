@@ -2,7 +2,7 @@ import pandas as pd
 import json
 from collections import defaultdict
 
-from project.utils import is_valid_teacher, remove_long_name
+from utils import is_valid_teacher, remove_long_name
 
 
 class TeacherSchedule:

@@ -17,7 +17,7 @@ WORKDIR /usr/src/app
 # Install dependencies using uv
 #RUN uv sync --locked
 RUN pip install --upgrade pip
-COPY ./requirements.txt /usr/src/app/requirements.txt
+COPY ./requirements.txt /usr/src/app
 RUN pip install -r requirements.txt
 
 # Now copy the rest of the application code

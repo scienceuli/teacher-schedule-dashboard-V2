@@ -7,8 +7,8 @@ from flask import send_file, Response, request, redirect, url_for, flash
 from flask import Flask, render_template
 from werkzeug.utils import secure_filename
 import pandas as pd
-from project.schedule import TeacherSchedule
-from project.utils import get_file, allowed_file, create_folder
+from schedule import TeacherSchedule
+from utils import get_file, allowed_file, create_folder
 
 load_dotenv()
 
@@ -232,4 +232,4 @@ def export_schedule_csv():
 
 
 if __name__ == "__main__":
-    app.run(debug=True)
+    app.run()
