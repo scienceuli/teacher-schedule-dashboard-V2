@@ -1,5 +1,5 @@
 import os
-from openpyxl.styles import Font, PatternFill, Alignment
+from openpyxl.styles import Font, PatternFill, Alignment, Border, Side
 from openpyxl.utils import get_column_letter
 
 def is_valid_teacher(name):
@@ -101,6 +101,28 @@ def style_excel_output(wb, ws_name, columns, highlight_column=None, highlight_ce
             
 
     return wb
+
+def set_alternating_column_background(ws, start_row=1, start_col=1, step=3, color1="FFFFCC", color2="FFFFFF"):
+    
+    max_col = ws.max_column
+    max_row = ws.max_row
+
+    for group_start in range(start_col, max_col + 1, step):
+        group_end = min(group_start + step - 1, max_col)
+        # Alternate color block
+        color = color1 if ((group_start - start_col) // step) % 2 == 0 else color2
+        fill = PatternFill(start_color=color, end_color=color, fill_type="solid")
+        border = Border(right=Side(style='thin'),)
+
+        for col in range(group_start, group_end + 1):
+            for row in range(start_row, max_row + 1):
+                ws.cell(row=row, column=col).fill = fill
+        
+        for row in range(start_row, max_row + 1):
+            ws.cell(row=row, column=group_start+step-1).border = border
+            # ws.cell(row=row, column=group_end).border = border
+
+    return ws
 
 
 
