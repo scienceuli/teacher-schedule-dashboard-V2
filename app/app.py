@@ -10,7 +10,7 @@ from flask import Flask, render_template, make_response
 from werkzeug.utils import secure_filename
 import pandas as pd
 from schedule import TeacherSchedule
-from utils import get_file, allowed_file, create_folder, style_excel_output
+from utils import get_file, allowed_file, create_folder, style_excel_output, set_alternating_column_background
 
 load_dotenv()
 
@@ -352,7 +352,11 @@ def export_summary_excel():
         for table in tables_by_grade:
             grade = table['grade']
             df = table['df']
-            df.to_excel(writer, sheet_name=f"Stufe {grade}", index=False)
+            sheet_name=f"Stufe {grade}"
+            df.to_excel(writer, sheet_name=sheet_name, index=False)
+            ws = writer.book[sheet_name]
+            style_excel_output(writer.book, sheet_name, df.columns.tolist())
+            set_alternating_column_background(ws, start_row=2, step=3)
 
     output.seek(0)
     return send_file(
