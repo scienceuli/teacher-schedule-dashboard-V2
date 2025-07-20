@@ -2,12 +2,20 @@
 #    uv pip compile pyproject.toml -o requirements.txt
 blinker==1.9.0
     # via flask
+brotli==1.1.0
+    # via fonttools
+cffi==1.17.1
+    # via weasyprint
 click==8.2.1
     # via flask
+cssselect2==0.8.0
+    # via weasyprint
 et-xmlfile==2.0.0
     # via openpyxl
 flask==3.1.1
     # via teacher-schedule-dashboard (pyproject.toml)
+fonttools==4.59.0
+    # via weasyprint
 gunicorn==23.0.0
     # via teacher-schedule-dashboard (pyproject.toml)
 itsdangerous==2.2.0
@@ -19,14 +27,26 @@ markupsafe==3.0.2
     #   flask
     #   jinja2
     #   werkzeug
+natsort==8.4.0
+    # via teacher-schedule-dashboard (pyproject.toml)
 numpy==2.3.1
-    # via pandas
+    # via
+    #   teacher-schedule-dashboard (pyproject.toml)
+    #   pandas
 openpyxl==3.1.5
     # via teacher-schedule-dashboard (pyproject.toml)
 packaging==25.0
     # via gunicorn
 pandas==2.3.1
     # via teacher-schedule-dashboard (pyproject.toml)
+pillow==11.3.0
+    # via weasyprint
+pycparser==2.22
+    # via cffi
+pydyf==0.11.0
+    # via weasyprint
+pyphen==0.17.2
+    # via weasyprint
 python-dateutil==2.9.0.post0
     # via pandas
 python-dotenv==1.1.1
@@ -35,7 +55,22 @@ pytz==2025.2
     # via pandas
 six==1.17.0
     # via python-dateutil
+tinycss2==1.4.0
+    # via
+    #   cssselect2
+    #   weasyprint
+tinyhtml5==2.0.0
+    # via weasyprint
 tzdata==2025.2
     # via pandas
+weasyprint==65.1
+    # via teacher-schedule-dashboard (pyproject.toml)
+webencodings==0.5.1
+    # via
+    #   cssselect2
+    #   tinycss2
+    #   tinyhtml5
 werkzeug==3.1.3
     # via flask
+zopfli==0.2.3.post1
+    # via fonttools

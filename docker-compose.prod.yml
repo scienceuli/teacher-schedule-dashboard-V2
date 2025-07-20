@@ -1,12 +1,26 @@
-version: '3.8'
+# name: 'teacher-schedule-dashboard'
 
 services:
-  flask-app:
+  web:
     build: app
     restart: always
-    ports:
-      - 5001:5001
+    expose:
+      - 5001
     env_file:
       - ./.env.prod
     command: gunicorn --bind 0.0.0.0:5001 app:app
+
+  db:
+    image: postgres:13
+    volumes:
+      - postgres_data_prod:/var/lib/postgresql/data/
+    env_file:
+      - ./.env.prod.db
+
+  nginx:
+    build: ./services/nginx
+    ports:
+      - 1337:80
+    depends_on:
+      - web
 

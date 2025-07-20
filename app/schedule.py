@@ -1,8 +1,11 @@
 import pandas as pd
+import numpy as np
 import json
+from natsort import index_natsorted
 from collections import defaultdict
 
-from utils import is_valid_teacher, remove_long_name
+
+from utils import is_valid_teacher, rename_columns
 
 
 class TeacherSchedule:
@@ -36,6 +39,8 @@ class TeacherSchedule:
         self._remove_non_class_columns()
         self._standardize_columns()
         self.class_columns = self._extract_class_columns()
+        #self.grade_columns = set([col[0] for col in self.class_columns])
+        self.grade_columns = ["5", "6", "7", "8", "9", "10", "KS1", "KS2"]
         print("class columns:\n", self.class_columns)
 
     def _get_excel_col_index(self, col_tuple):
@@ -131,16 +136,28 @@ class TeacherSchedule:
 
     def _extract_teacher_meta(self):
         # Extract specific columns from original DataFrame
-        cols = [("Deputat 24/25", ""), ("Anr", "Std"), ("Bonus", "")]
+        cols = [
+            ("Deputat 24/25", ""),
+            ("Anr", "Std"),
+            ("Bonus", ""),
+            ("Sonderaufgaben/Ermäßigung !! Nicht vollständig aktualisiert!!", "Bg"),
+            ("Ags [unter Vorbehalt]", "AG"),
+            ("Ags [unter Vorbehalt]", "Std"),
+            ("Poolstd [unter Vorbehalt]", "Bg"),
+            ("Poolstd [unter Vorbehalt]", "Std"),
+        ]
         # print("cols:\n", self.df.columns)
-        available = [col for col in self.df.columns if col in cols or col[0].startswith("Sonderaufgaben")]
+        available = [col for col in self.df.columns if col in cols]
         if not available:
             return pd.DataFrame()
-        # print("teacher meta:\n", self.df[available].rename(columns=lambda x: x[0]))
+        
+        result_df = self.df[available].rename(columns=lambda x: rename_columns(x))
+        
+        # handle missing values
+        result_df[result_df.select_dtypes(include="number").columns] = result_df.select_dtypes(include="number").fillna(0)
+        result_df[result_df.select_dtypes(include="object").columns] = result_df.select_dtypes(include="object").fillna("")
 
-        return (
-            self.df[available].rename(columns=lambda x: remove_long_name(x[0])).fillna(0)
-        )  # Flatten to single-level
+        return result_df
 
     
     def _extract_class_teachers(self):
@@ -204,13 +221,17 @@ class TeacherSchedule:
         load = self.get_teaching_load(teacher)
         actual = self.get_total_lessons(teacher)
         expected = (
-            load.get("Deputat 24/25", 0) - load.get("Anr", 0) - load.get("Bonus", 0)
+            load.get("Deputat 24/25", 0) 
+            - load.get("Anr", 0) 
+            - load.get("Bonus", 0)
+            - load.get("Ags-Std", 0) 
+            - load.get("Poolstd-Std", 0)
         )
 
         return {
             "teacher": teacher,
-            "assigned": actual,
-            "expected": expected,
+            "assigned": actual, # WS
+            "expected": expected, # Deputat Netto
             "delta": actual - expected,
         }
 
@@ -246,48 +267,63 @@ class TeacherSchedule:
                 continue
         return result
 
-    def build_wide_class_table(self):
-        class_blocks = []
-        max_rows = 0
+    def build_wide_class_table(self, sort):
+        
+        wide_df_list = []
 
-        for class_name in self.class_columns:
-            fach_col = (class_name, "Fach")
-            stunden_col = (class_name, "Std")
+        for grade in self.grade_columns:
+            wide_df = dict()
+            class_blocks = []
+            max_rows = 0
+            for class_name in list(filter(lambda x: x.startswith(grade), self.class_columns)):  # self.class_columns:
+                fach_col = (class_name, "Fach")
+                stunden_col = (class_name, "Std")
 
-            # Skip if either column missing
-            if fach_col not in self.df.columns or stunden_col not in self.df.columns:
-                continue
+                # Skip if either column missing
+                if fach_col not in self.df.columns or stunden_col not in self.df.columns:
+                    continue
 
-            # Filter only teachers with lessons in that class
-            sub_df = self.df[self.df[stunden_col].notna()][
-                [fach_col, stunden_col]
-            ].copy()
-            sub_df = sub_df.rename(
-                columns={
-                    fach_col: f"{class_name} – Fach",
-                    stunden_col: f"{class_name} – Std",
-                }
-            )
-            sub_df.insert(0, f"{class_name} – Teacher", sub_df.index)
+                # Filter only teachers with lessons in that class
+                sub_df = self.df[self.df[stunden_col].notna()][
+                    [fach_col, stunden_col]
+                ].copy()
+                # sub_df = sub_df.rename(
+                #     columns={
+                #         fach_col: f"{class_name} – Fach",
+                #         stunden_col: f"{class_name} – Std",
+                #     }
+                # )
+                sub_df.columns = [f"{col[0]} – {col[1]}" for col in sub_df.columns]
+                sub_df.insert(0, f"{class_name} – Teacher", sub_df.index)
 
-            sub_df = sub_df.reset_index(drop=True)
-            max_rows = max(max_rows, len(sub_df))
-            class_blocks.append(sub_df)
+                f = lambda col: np.argsort(index_natsorted(col.str.lower().str.normalize('NFD')))
 
-        # Pad all blocks to the same number of rows
-        for i in range(len(class_blocks)):
-            block = class_blocks[i]
-            if len(block) < max_rows:
-                # Add empty rows
-                pad_size = max_rows - len(block)
-                padding = pd.DataFrame(
-                    [[""] * block.shape[1]] * pad_size, columns=block.columns
-                )
-                class_blocks[i] = pd.concat([block, padding], ignore_index=True)
+                if sort == "teacher":
+                    sub_df = sub_df.sort_values(by=f"{class_name} – Teacher", key=f).reset_index(drop=True)
 
-        # Concatenate all blocks side-by-side
-        wide_df = pd.concat(class_blocks, axis=1)
-        return wide_df
+                elif sort == "fach":
+                    sub_df = sub_df.sort_values(by=f"{class_name} – Fach", key=f).reset_index(drop=True)
+
+                sub_df = sub_df.reset_index(drop=True)
+                max_rows = max(max_rows, len(sub_df))
+                class_blocks.append(sub_df)
+
+                # Pad all blocks to the same number of rows
+                for i in range(len(class_blocks)):
+                    block = class_blocks[i]
+                    if len(block) < max_rows:
+                        # Add empty rows
+                        pad_size = max_rows - len(block)
+                        padding = pd.DataFrame(
+                            [[""] * block.shape[1]] * pad_size, columns=block.columns
+                        )
+                        class_blocks[i] = pd.concat([block, padding], ignore_index=True)
+
+            # Concatenate all blocks side-by-side
+            wide_df['df'] = pd.concat(class_blocks, axis=1)
+            wide_df['grade'] = grade
+            wide_df_list.append(wide_df)
+        return wide_df_list
 
     def get_dashboard_rows(self):
         teacher_names = self.df.index.tolist()
@@ -299,6 +335,8 @@ class TeacherSchedule:
             load["dep"] = meta.get("Deputat 24/25", 0)
             load["anr"] = meta.get("Anr", 0)
             load["bonus"] = meta.get("Bonus", 0)
+            load['ags'] = meta.get("Ags-Std", 0)
+            load['pool'] = meta.get("Poolstd-Std", 0)
             load["teacher"] = name
             rows.append(load)
 

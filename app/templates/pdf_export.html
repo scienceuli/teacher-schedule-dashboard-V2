@@ -1,0 +1,26 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <style>
+    body { font-family: sans-serif; margin: 0.5cm; }
+    table { border-collapse: collapse; width: 100%; margin-bottom: 2cm; }
+    th, td { border: 1px solid #ccc; padding: 2px; font-size: 9px; text-align: center; }
+    h2 { page-break-before: always; }
+    @page {
+      size: A4 landscape;
+      margin: 0.5cm;
+    }
+    .grade-block { page-break-after: always; }
+    .grade-block:last-child { page-break-after: auto; }
+  </style>
+</head>
+<body>
+  {% for block in grade_tables %}
+    <div class="grade-block">
+      <p><strong>Jahrgang {{ block.grade }}</strong></p>
+      {{ block.df.to_html(classes="table", index=False, border=1) | safe }}
+    </div>
+  {% endfor %}
+</body>
+</html>

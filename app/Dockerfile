@@ -1,6 +1,17 @@
 # Use the latest available Python 3.12 slim image (3.13 may not be available yet)
 FROM python:3.12-slim
 
+# needed for weasyprint
+RUN apt-get update && apt-get install -y \
+    build-essential \
+    libpango-1.0-0 \
+    libpangocairo-1.0-0 \
+    libcairo2 \
+    libgdk-pixbuf2.0-0 \
+    libffi-dev \
+    shared-mime-info \
+    && rm -rf /var/lib/apt/lists/*
+
 ENV COMPOSE_BAKE=true \
     PYTHONDONTWRITEBYTECODE=1 \
     PYTHONUNBUFFERED=1

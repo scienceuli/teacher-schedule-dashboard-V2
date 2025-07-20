@@ -5,7 +5,10 @@
 <div class="container py-5">
     <h2 class="mb-4">Übersicht Deputate</h2>
     <p><a href="{{ url_for('export_dashboard_csv') }}" class="btn btn-outline-primary mb-3">
-            Export
+            Export CSV
+        </a>
+        <a href="{{ url_for('export_dashboard_excel') }}" class="btn btn-outline-secondary mb-3">
+            Export Excel
         </a>
     </p>
 
@@ -16,6 +19,8 @@
                 <th>Deputat</th>
                 <th>Anr</th>
                 <th>Bonus</th>
+                <th>AGs</th>
+                <th>Pool</th>
                 <th>Deputat (net)</th>
                 <th>WS</th>
 
@@ -30,6 +35,8 @@
                 <td>{{ row.dep | round(1) }}</td>
                 <td>{{ row.anr }}</td>
                 <td>{{ row.bonus }}</td>
+                <td>{{ row.ags }}</td>
+                <td>{{ row.pool }}</td>
                 <td>{{ row.expected }}</td>
                 <td>{{ row.assigned }}</td>
                 <td>{% if row.delta>0 %}+{% endif %}{{ row.delta }}</td>

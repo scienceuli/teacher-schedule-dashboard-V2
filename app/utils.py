@@ -1,4 +1,6 @@
 import os
+from openpyxl.styles import Font, PatternFill, Alignment
+from openpyxl.utils import get_column_letter
 
 def is_valid_teacher(name):
     return isinstance(name, str) and name.count(",") == 1 and all(part.strip() for part in name.split(","))
@@ -23,7 +25,85 @@ def create_folder(folder_path):
     if not os.path.exists(folder_path):
         os.makedirs(folder_path)
 
-def remove_long_name(name):
-    if name.startswith("Sonderaufgaben"):
+def rename_columns(x):
+    header = x[0]
+    subheader = x[1]
+    if header.startswith("Sonderaufgaben"):
         return "Sonderaufgaben"
-    return name
+    if header.startswith("Ags") and subheader == "AG":
+        return "Ags-AG"
+    if header.startswith("Ags") and subheader == "Std":
+        return "Ags-Std"
+    if header.startswith("Poolstd") and subheader == "Bg":
+        return "Poolstd-Bg"
+    if header.startswith("Poolstd") and subheader == "Std":
+        return "Poolstd-Std"
+    return header
+
+def style_excel_output(wb, ws_name, columns, highlight_column=None, highlight_cell=None):
+    ws = wb[ws_name]
+
+    # Freeze header row
+    ws.freeze_panes = "A2"
+
+    # Style header
+    header_fill = PatternFill(start_color="D9E1F2", end_color="D9E1F2", fill_type="solid")
+    header_font = Font(bold=True)
+    for cell in ws[1]:
+        cell.font = header_font
+        cell.fill = header_fill
+        cell.alignment = Alignment(horizontal="center")
+
+    # Auto-width columns
+    for col in ws.columns:
+        max_length = 0
+        column = col[0].column  # Get column index (number)
+        for cell in col:
+            try:
+                if cell.value:
+                    max_length = max(max_length, len(str(cell.value)))
+            except:
+                pass
+        adjusted_width = max_length + 2
+        ws.column_dimensions[get_column_letter(column)].width = adjusted_width
+
+    # Optional: Highlight Delta > 0
+    if highlight_column:
+        
+        for row in ws.iter_rows(min_row=2, min_col=columns.index(highlight_column) + 1, max_col=columns.index(highlight_column) + 1):
+            for cell in row:
+                try:
+                    if isinstance(cell.value, (int, float)) and cell.value > 0:
+                        cell.fill = PatternFill(start_color="FFCCCC", end_color="FFCCCC", fill_type="solid")
+                except:
+                    continue
+
+    if highlight_cell:
+        target_row_label = highlight_cell.get('row')
+        target_col_label = highlight_cell.get('column')
+        target_row = None
+        target_col = None
+        for col_idx, cell in enumerate(ws[1], start=1):
+            if cell.value == target_col_label:
+                target_col = col_idx
+                break
+        
+        for row_idx in range(2, ws.max_row + 1):  # assuming headers in row 1
+            if ws.cell(row=row_idx, column=1).value == target_row_label:
+                target_row = row_idx
+                break
+        if target_row and target_col:
+            cell = ws.cell(row=target_row, column=target_col)
+            if isinstance(cell.value, (int, float)) and cell.value < 0:
+                cell.fill = PatternFill(start_color="FFCCCC", end_color="FFCCCC", fill_type="solid") 
+            elif isinstance(cell.value, (int, float)) and cell.value > 0:
+                cell.fill = PatternFill(start_color="CCFFCC", end_color="CCFFCC", fill_type="solid")
+            
+
+    return wb
+
+
+
+
+
+

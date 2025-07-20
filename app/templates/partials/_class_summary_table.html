@@ -1,0 +1,38 @@
+ <button
+    class="btn btn-outline-primary mb-3"
+    hx-get="{{ url_for('class_summary') }}?sort={{ 'fach' if sort == 'teacher' else 'teacher' }}"
+    hx-target="#table-container"
+    hx-swap="innerHTML"
+  >
+    Sortieren nach {{ 'Fach' if sort == 'teacher' else 'Lehrer' }}
+  </button>
+  
+  <a href="{{ url_for('export_summary_csv') }}" class="btn btn-primary mb-3">Download CSV</a>
+  <a href="{{ url_for('export_summary_excel') }}" class="btn btn-info mb-3">Download Excel</a>
+
+  <a href="{{ url_for('export_summary_pdf') }}" class="btn btn-secondary mb-3">Download PDF</a>
+
+ {% for table in table_list %}
+ <h3>{{ table["grade"] }}</h3>
+ <table id="summary" class="table table-bordered table-sm align-middle text-nowrap">
+    
+        <thead>
+        <tr>
+          {% for col in table["df"].columns %}
+            <th>{{ col }}</th>
+          {% endfor %}
+        </tr>
+      </thead>
+      <tbody>
+        {% for _, row in table["df"].iterrows() %}
+          <tr>
+            {% for val in row %}
+              <td>{{ val }}</td>
+            {% endfor %}
+          </tr>
+        {% endfor %}
+      </tbody>
+
+    </table>
+
+    {% endfor %}
