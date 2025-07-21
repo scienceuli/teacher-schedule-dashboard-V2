@@ -140,7 +140,7 @@ class TeacherSchedule:
             ("Deputat 24/25", ""),
             ("Anr", "Std"),
             ("Bonus", ""),
-            ("Sonderaufgaben/Ermäßigung !! Nicht vollständig aktualisiert!!", "Bg"),
+            ("Sonderaufgaben", "Bg"),
             ("Ags [unter Vorbehalt]", "AG"),
             ("Ags [unter Vorbehalt]", "Std"),
             ("Poolstd [unter Vorbehalt]", "Bg"),
