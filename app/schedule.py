@@ -278,6 +278,9 @@ class TeacherSchedule:
             for class_name in list(filter(lambda x: x.startswith(grade), self.class_columns)):  # self.class_columns:
                 fach_col = (class_name, "Fach")
                 stunden_col = (class_name, "Std")
+                main_teachers_for_class = self.class_teachers.get(class_name, {})
+                print(f"main_teachers_for_class: {main_teachers_for_class}")
+
 
                 # Skip if either column missing
                 if fach_col not in self.df.columns or stunden_col not in self.df.columns:
@@ -305,19 +308,36 @@ class TeacherSchedule:
                     sub_df = sub_df.sort_values(by=f"{class_name} – Fach", key=f).reset_index(drop=True)
 
                 sub_df = sub_df.reset_index(drop=True)
+
+                print(f"sub_df: {sub_df}")
+
+
+                # add main teachers
+                if main_teachers_for_class:     
+                    empty_row = ["", "", ""]               
+                    main_teacher_row = ["KL:", main_teachers_for_class.get("main"), ""]
+                    deputies = main_teachers_for_class.get("deputies")
+                    deputies_string = ", ".join(deputies)
+                    deputies_row = ["TP:", deputies_string, ""]
+                    new_rows = [empty_row, main_teacher_row, deputies_row]
+                    new_df = pd.DataFrame(new_rows, columns=sub_df.columns)
+                    sub_df = pd.concat([sub_df, new_df], ignore_index=True)
+
                 max_rows = max(max_rows, len(sub_df))
                 class_blocks.append(sub_df)
 
-                # Pad all blocks to the same number of rows
-                for i in range(len(class_blocks)):
-                    block = class_blocks[i]
-                    if len(block) < max_rows:
-                        # Add empty rows
-                        pad_size = max_rows - len(block)
-                        padding = pd.DataFrame(
-                            [[""] * block.shape[1]] * pad_size, columns=block.columns
-                        )
-                        class_blocks[i] = pd.concat([block, padding], ignore_index=True)
+            # Pad all blocks to the same number of rows
+            for i in range(len(class_blocks)):
+                block = class_blocks[i]
+                if len(block) < max_rows:
+                    # Add empty rows
+                    pad_size = max_rows - len(block)
+                    padding = pd.DataFrame(
+                        [[""] * block.shape[1]] * pad_size, columns=block.columns
+                    )
+                    class_blocks[i] = pd.concat([block, padding], ignore_index=True)
+
+               
 
             # Concatenate all blocks side-by-side
             wide_df['df'] = pd.concat(class_blocks, axis=1)

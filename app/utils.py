@@ -124,6 +124,15 @@ def set_alternating_column_background(ws, start_row=1, start_col=1, step=3, colo
 
     return ws
 
+def insert_excel_rows(ws, string, number_of_rows=1):
+    header_font = Font(bold=True)
+    for _ in range(number_of_rows):
+        ws.insert_rows(1)
+        
+    ws.cell(row=1, column=1).value = string
+    ws.cell(row=1, column=1).font = header_font
+
+
 
 
 

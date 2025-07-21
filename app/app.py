@@ -10,11 +10,12 @@ from flask import Flask, render_template, make_response
 from werkzeug.utils import secure_filename
 import pandas as pd
 from schedule import TeacherSchedule
-from utils import get_file, allowed_file, create_folder, style_excel_output, set_alternating_column_background
+from utils import get_file, allowed_file, create_folder, style_excel_output, set_alternating_column_background, insert_excel_rows
 
 load_dotenv()
 
 app = Flask(__name__)
+app.config.from_object("config.Config")
 app.secret_key = os.getenv("SECRET_KEY")
 
 project_path = os.path.dirname(os.path.realpath(__file__))
@@ -167,8 +168,8 @@ def export_teacher_load_excel():
             sheet_name = name
             result_df.to_excel(writer, sheet_name=sheet_name[:31], index=False)  # max Excel sheet name length is 31
             ws = writer.sheets[sheet_name]
-            ws = style_excel_output(writer.book, sheet_name, result_df.columns.tolist(), highlight_cell={'row': 'Bonus (Zukunft)', 'column': 'Stunden'})
-            
+            style_excel_output(writer.book, sheet_name, result_df.columns.tolist(), highlight_cell={'row': 'Bonus (Zukunft)', 'column': 'Stunden'})
+            insert_excel_rows(ws, name, 2)
 
 
     output.seek(0)
