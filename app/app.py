@@ -343,9 +343,10 @@ def export_summary_csv(sort):
 from flask import send_file
 import io
 
-@app.route("/summary/export/excel")
+@app.route("/summary/export/excel/")
 def export_summary_excel():
-    sort = 'teacher'
+    sort = request.args.get("sort", "teacher") 
+    print("sort:", sort)
     tables_by_grade = ts.build_wide_class_table(sort)
     output = io.BytesIO()
 
@@ -370,7 +371,8 @@ def export_summary_excel():
 
 @app.route("/summary/export/pdf")
 def export_summary_pdf():
-    sort = 'teacher'
+    sort = request.args.get("sort", "teacher") 
+
     grade_tables = ts.build_wide_class_table(sort)  # list of {'grade': '5', 'df': DataFrame}
 
     rendered = render_template("pdf_export.html", grade_tables=grade_tables)

@@ -7,10 +7,9 @@
     Sortieren nach {{ 'Fach' if sort == 'teacher' else 'Lehrer' }}
   </button>
   
-  <a href="{{ url_for('export_summary_csv') }}" class="btn btn-primary mb-3">Download CSV</a>
-  <a href="{{ url_for('export_summary_excel') }}" class="btn btn-info mb-3">Download Excel</a>
+  <a href="{{ url_for('export_summary_excel') }}?sort={{sort}}" class="btn btn-info mb-3">Download Excel</a>
 
-  <a href="{{ url_for('export_summary_pdf') }}" class="btn btn-secondary mb-3">Download PDF</a>
+  <a href="{{ url_for('export_summary_pdf') }}?sort={{sort}}" class="btn btn-secondary mb-3">Download PDF</a>
 
  {% for table in table_list %}
  <h3>{{ table["grade"] }}</h3>

@@ -309,8 +309,6 @@ class TeacherSchedule:
 
                 sub_df = sub_df.reset_index(drop=True)
 
-                print(f"sub_df: {sub_df}")
-
 
                 # add main teachers
                 if main_teachers_for_class:     
