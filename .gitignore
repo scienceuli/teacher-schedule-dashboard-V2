@@ -14,6 +14,9 @@ wheels/
 
 # config
 .env
+.env.dev
+.env.prod
+.env.prod.db
 
 # Daten
 data/
