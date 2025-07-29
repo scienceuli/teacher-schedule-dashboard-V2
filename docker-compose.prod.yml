@@ -20,7 +20,7 @@ services:
       - webproxy
 
   mongo:
-    image: mongo:latest
+    image: mongo:4.4
     container_name: mongo
     volumes:
       - /opt/mongo-data:/data/db  # persist MongoDB data
@@ -31,7 +31,7 @@ services:
 
   nginx-proxy:
     image: jwilder/nginx-proxy
-
+    container_name: nginx-proxy
     volumes:
       - /etc/nginx/certs
       - /etc/nginx/vhost.d
