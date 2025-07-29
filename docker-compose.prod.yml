@@ -59,7 +59,7 @@ services:
       - ./vhost.d:/etc/nginx/vhost.d
       - ./html:/usr/share/nginx/html
     networks:
-      - web
+      - all-apps-network
 
 networks:
   all-apps-network:
