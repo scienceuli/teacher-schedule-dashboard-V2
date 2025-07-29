@@ -29,10 +29,10 @@ services:
       - "27017:27017"
 
   nginx:
-    build: ./services/nginx
-    ports:
-      - 80:80
-      - 443:443
+    image: nginx:alpine
+    # ports:
+    #   - 80:80
+    #   - 443:443
     depends_on:
       - web
     volumes:
