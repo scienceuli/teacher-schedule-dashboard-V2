@@ -25,7 +25,7 @@ services:
     image: mongo:4.4
     container_name: mongo
     volumes:
-      - /opt/mongo-data:/data/db  # persist MongoDB data
+      - mongo_data:/data/db
     networks:
       - webproxy
     ports:
@@ -68,4 +68,5 @@ volumes:
   vhost:
   html:
   uploads:
+  mongo_data:
 
