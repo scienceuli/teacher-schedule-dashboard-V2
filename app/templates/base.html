@@ -19,6 +19,8 @@
                 <span class="navbar-toggler-icon"></span>
             </button>
             <div class="collapse navbar-collapse" id="navbarID">
+                {% if session.username %}
+
                 <div class="navbar-nav">
                     <a class="nav-link active" aria-current="page" href="{{ url_for('index')}}">Übersicht</a>
                     <a class="nav-link active" aria-current="page" href="{{ url_for('dashboard')}}">Dashboard</a>
@@ -27,9 +29,23 @@
                     <a class="nav-link active" aria-current="page" href="{{ url_for('export_schedule_csv')}}">Export alle Lehrer</a>
                     <a class="nav-link active" aria-current="page" href="{{ url_for('export_teacher_load_excel')}}">Export Stundenbilanz</a>
                 </div>
+                {% endif %}
+            </div>
+            <div class="text-end">
+                {% if session.username %}
+                <a href="{{ url_for('accounts.logout') }}"><button type="button" class="btn btn-danger me-2">Logout</button></a>
+                {% else %}
+                <a href="{{ url_for('accounts.login') }}"><button type="button" class="btn btn-outline-light me-2">Login</button></a>
+                {% endif %}
+                
             </div>
         </div>
     </nav>
+    {% with messages = get_flashed_messages(with_categories=true) %}
+        {% for category, message in messages %}
+            <div class="flash {{ category }}">{{ message }}</div>
+        {% endfor %}
+    {% endwith %}
     <div class="container py-4">
         {% block content %}
         {% endblock %}

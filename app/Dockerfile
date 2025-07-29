@@ -10,6 +10,7 @@ RUN apt-get update && apt-get install -y \
     libgdk-pixbuf2.0-0 \
     libffi-dev \
     shared-mime-info \
+    iputils-ping \
     && rm -rf /var/lib/apt/lists/*
 
 ENV COMPOSE_BAKE=true \

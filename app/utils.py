@@ -2,6 +2,9 @@ import os
 from openpyxl.styles import Font, PatternFill, Alignment, Border, Side
 from openpyxl.utils import get_column_letter
 
+from functools import wraps
+from flask import session, redirect, url_for, flash
+
 def is_valid_teacher(name):
     return isinstance(name, str) and name.count(",") == 1 and all(part.strip() for part in name.split(","))
 
@@ -131,6 +134,18 @@ def insert_excel_rows(ws, string, number_of_rows=1):
         
     ws.cell(row=1, column=1).value = string
     ws.cell(row=1, column=1).font = header_font
+
+
+
+def login_required(view_func):
+    @wraps(view_func)
+    def wrapped_view(*args, **kwargs):
+        if 'username' not in session:
+            flash('Please log in first.', 'warning')
+            return redirect(url_for('accounts.login'))
+        return view_func(*args, **kwargs)
+    return wrapped_view
+
 
 
 

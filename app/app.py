@@ -1,18 +1,31 @@
 import os
 import io
 import csv
+import json
 from openpyxl import load_workbook
 from weasyprint import HTML
 from dotenv import load_dotenv
+from decouple import config
 
-from flask import send_file, Response, request, redirect, url_for, flash
+from flask import send_file, Response, request, redirect, url_for, flash, session, current_app
 from flask import Flask, render_template, make_response
+from flask_bcrypt import Bcrypt
+from flask_login import LoginManager
+from flask_migrate import Migrate
+from flask_sqlalchemy import SQLAlchemy
+
 from werkzeug.utils import secure_filename
+
+from flask_pymongo import PyMongo
+
 import pandas as pd
 from schedule import TeacherSchedule
-from utils import get_file, allowed_file, create_folder, style_excel_output, set_alternating_column_background, insert_excel_rows
+from utils import get_file, allowed_file, create_folder, style_excel_output, set_alternating_column_background, insert_excel_rows, login_required
+
+from accounts.views import accounts_bp
 
 load_dotenv()
+load_dotenv(dotenv_path='.env.prod.db')
 
 app = Flask(__name__)
 app.config.from_object("config.Config")
@@ -22,8 +35,36 @@ project_path = os.path.dirname(os.path.realpath(__file__))
 print(f"Project path: {project_path}")
 print(f"UPLOAD_FOLDER: {os.getenv('UPLOAD_FOLDER')}")
 
+
 upload_folder = os.path.join(project_path, os.getenv("UPLOAD_FOLDER"))
 app.config["UPLOAD_FOLDER"] = upload_folder
+
+#############################
+# Mongo database
+#############################
+
+# MongoDB connection setup
+app.config['MONGO_URI'] = 'mongodb://mongo:27017/teacherapp'
+mongo = PyMongo(app)
+
+# Make Mongo available globally
+app.mongo = mongo
+
+
+############################
+# user handling
+############################
+
+# Registering acount blueprint
+
+app.register_blueprint(accounts_bp)
+
+
+############################
+# schedule configs
+############################
+
+
 
 ALLOWED_EXTENSIONS = {"xls", "xlsx"}
 
@@ -40,18 +81,32 @@ else:
     print("⚠️ No Excel file found. Waiting for upload.")
 
 
-@app.route("/")
+
+
+#############################
+# routes
+#############################
+
+@app.route('/')
 def index():
+    if 'username' in session:
+        return f"Welcome {session['username']}! <a href='/accounts/logout'>Logout</a> | <a href='/accounts/change-password'>Change Password</a>"
+    return redirect(url_for('accounts.login'))
+
+@app.route("/start")
+@login_required
+def start():
     global ts
     if not ts:
         flash("No valid Excel file loaded. Please upload one.", "warning")
         return redirect(url_for("upload_file"))
     class_names = ts.get_classes()
     teacher_names = ts.get_df().index.tolist()
-    return render_template("index.html", classes=class_names, teachers=teacher_names)
+    return render_template("start.html", classes=class_names, teachers=teacher_names)
 
 
 @app.route("/upload", methods=["GET", "POST"])
+@login_required
 def upload_file():
     global ts
     if request.method == "POST":
@@ -72,6 +127,7 @@ def upload_file():
 
 
 @app.route("/class/<cls>")
+@login_required
 def show_class(cls):
     records = ts.get_teachers_in_class(cls)
     main_teachers_for_class = ts.class_teachers.get(cls, {})
@@ -87,6 +143,7 @@ def show_class(cls):
 
 
 @app.route("/teacher/<name>")
+@login_required
 def show_teacher(name):
     records = ts.get_classes_of_teacher(name)
     total = ts.get_total_lessons(name)
@@ -103,6 +160,7 @@ def show_teacher(name):
 
 
 @app.route("/teacher/<name>/load")
+@login_required
 def show_teacher_load(name):
     data = ts.compare_load(name)
 
@@ -121,6 +179,7 @@ def show_teacher_load(name):
 
 
 @app.route("/teacher/load/export/excel")
+@login_required
 def export_teacher_load_excel():
     output = io.BytesIO()
     with pd.ExcelWriter(output, engine="openpyxl") as writer:
@@ -183,12 +242,14 @@ def export_teacher_load_excel():
 
 
 @app.route("/dashboard")
+@login_required
 def dashboard():
     rows = ts.get_dashboard_rows()
     return render_template("dashboard.html", rows=rows)
 
 
 @app.route("/export/dashboard/csv")
+@login_required
 def export_dashboard_csv():
     rows = ts.get_dashboard_rows()
     if not rows:
@@ -232,6 +293,7 @@ def export_dashboard_csv():
     )
 
 @app.route("/export/dashboard/excel")
+@login_required
 def export_dashboard_excel():
     teacher_names = ts.get_df().index.tolist()
     rows = []
@@ -279,6 +341,7 @@ def export_dashboard_excel():
 
 
 @app.route("/export/class/<cls>.csv")
+@login_required
 def export_class_csv(cls):
     df = ts.get_df(reset_index=True)
     subset = ts.get_teachers_in_class(cls)
@@ -298,6 +361,7 @@ def export_class_csv(cls):
 
 
 @app.route("/export/teacher/<name>.csv")
+@login_required
 def export_teacher_csv(name):
     subset = ts.get_classes_of_teacher(name)
     if not subset:
@@ -316,6 +380,7 @@ def export_teacher_csv(name):
 
 
 @app.route("/summary")
+@login_required
 def class_summary():
     sort = request.args.get("sort", "teacher") 
     print("sort:", sort)
@@ -328,6 +393,7 @@ def class_summary():
 
 @app.route("/summary/export/", defaults={'sort': 'teacher'})
 @app.route("/summary/export/<sort>")
+@login_required
 def export_summary_csv(sort):
     df = ts.build_wide_class_table(sort)
     csv_data = io.StringIO()
@@ -344,6 +410,7 @@ from flask import send_file
 import io
 
 @app.route("/summary/export/excel/")
+@login_required
 def export_summary_excel():
     sort = request.args.get("sort", "teacher") 
     print("sort:", sort)
@@ -370,6 +437,7 @@ def export_summary_excel():
 
 
 @app.route("/summary/export/pdf")
+@login_required
 def export_summary_pdf():
     sort = request.args.get("sort", "teacher") 
 
@@ -386,6 +454,7 @@ def export_summary_pdf():
     return response
 
 @app.route("/export/schedule.csv")
+@login_required
 def export_schedule_csv():
     long_df = ts.get_teacher_schedule_long()  # Your method to get long format DataFrame
 

@@ -9,13 +9,20 @@ services:
     env_file:
       - ./.env.prod
     command: gunicorn --bind 0.0.0.0:5001 app:app
+    depends_on:
+      - mongo
+    networks:
+      - all-apps-network
 
-  db:
-    image: postgres:13
+  mongo:
+    image: mongo:latest
+    container_name: mongo
     volumes:
-      - postgres_data_prod:/var/lib/postgresql/data/
-    env_file:
-      - ./.env.prod.db
+      - /opt/mongo-data:/data/db  # persist MongoDB data
+    networks:
+      - all-apps-network
+    ports:
+      - "27017:27017"
 
   nginx:
     build: ./services/nginx
@@ -23,7 +30,10 @@ services:
       - 1337:80
     depends_on:
       - web
+    networks:
+      - all-apps-network
 
-volumes:
-  postgres_data_prod:
+networks:
+  all-apps-network:
+    driver: bridge
 
