@@ -14,6 +14,8 @@ services:
       - LETSENCRYPT_HOST=teacher.sam-projekte.de
       - LETSENCRYPT_EMAIL=uk@science-and-more.de
     command: gunicorn --bind 0.0.0.0:5001 app:app
+    volumes:
+      - uploads:/app/data
     depends_on:
       - mongo
     networks:
@@ -65,4 +67,5 @@ volumes:
   certs:
   vhost:
   html:
+  uploads:
 

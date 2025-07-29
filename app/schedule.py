@@ -9,8 +9,9 @@ from utils import is_valid_teacher, rename_columns
 
 
 class TeacherSchedule:
-    def __init__(self, excel_path, data_start_row=5):
+    def __init__(self, excel_path, data_start_row=3):
         # class teacher and deputy data
+        self.excel_path = excel_path
         self.df = pd.read_excel(excel_path, header=[0, 1])
         self.df = self.df.iloc[data_start_row:].copy()
         # self.main_teachers_row = pd.read_excel(excel_path, header=None).iloc[2]
@@ -30,7 +31,7 @@ class TeacherSchedule:
             "2std BF": "Fach",
             "Std": "Std",
         }
-
+        print("df:\n", self.df)
         self._clean_headers()
         self._normalize_headers()
         self._remove_non_teacher_rows()

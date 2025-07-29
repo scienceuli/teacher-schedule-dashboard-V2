@@ -1,0 +1,9 @@
+{% extends 'base.html' %}
+
+{% block content %}
+{% if session.username %}
+Hallo, {{ session.username }}!
+{% else %}
+Bitte zuerst einloggen
+{% endif %}
+{% endblock %}

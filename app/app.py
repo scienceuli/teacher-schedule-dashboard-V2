@@ -35,6 +35,10 @@ project_path = os.path.dirname(os.path.realpath(__file__))
 print(f"Project path: {project_path}")
 print(f"UPLOAD_FOLDER: {os.getenv('UPLOAD_FOLDER')}")
 
+@app.context_processor
+def inject_breadcrumb():
+    return dict(uploaded_filename=session.get('uploaded_filename'))
+
 
 upload_folder = os.path.join(project_path, os.getenv("UPLOAD_FOLDER"))
 app.config["UPLOAD_FOLDER"] = upload_folder
@@ -90,7 +94,7 @@ else:
 @app.route('/')
 def index():
     if 'username' in session:
-        return f"Welcome {session['username']}! <a href='/accounts/logout'>Logout</a> | <a href='/accounts/change-password'>Change Password</a>"
+        return render_template("index.html")
     return redirect(url_for('accounts.login'))
 
 @app.route("/start")
@@ -114,11 +118,14 @@ def upload_file():
         if file and allowed_file(file.filename, ALLOWED_EXTENSIONS):
             filename = secure_filename(file.filename)
             filepath = os.path.join(app.config["UPLOAD_FOLDER"], filename)
+            print(f"Saving file to: {filepath}")
             file.save(filepath)
+
+            session['uploaded_filename'] = filename
 
             ts = TeacherSchedule(filepath)
             flash("Upload successful!", "success")
-            return redirect(url_for("index"))
+            return redirect(url_for("start"))
         else:
             flash("Invalid file type. Please upload an Excel file.", "danger")
             return redirect(url_for("upload_file"))

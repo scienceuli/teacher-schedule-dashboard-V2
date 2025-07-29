@@ -16,7 +16,11 @@ def get_file(data_dir, extensions):
     if not data_files:
         return None  # No file found
 
+    print('data_files:', data_files)
+
     data_file = max(data_files, key=os.path.getmtime)
+
+    print('newest data_file:', data_file)
 
     return data_file
 
