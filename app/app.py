@@ -20,7 +20,7 @@ from flask_pymongo import PyMongo
 
 import pandas as pd
 from schedule import TeacherSchedule
-from utils import get_file, allowed_file, create_folder, style_excel_output, set_alternating_column_background, insert_excel_rows, login_required
+from utils import get_file, allowed_file, create_folder, style_excel_output, set_alternating_column_background, insert_excel_rows, set_size, login_required
 
 from accounts.views import accounts_bp
 
@@ -236,6 +236,7 @@ def export_teacher_load_excel():
             ws = writer.sheets[sheet_name]
             style_excel_output(writer.book, sheet_name, result_df.columns.tolist(), highlight_cell={'row': 'Bonus (Zukunft)', 'column': 'Stunden'})
             insert_excel_rows(ws, name, 2)
+            set_size(ws, orientation="landscape")
 
 
     output.seek(0)

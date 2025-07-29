@@ -139,6 +139,12 @@ def insert_excel_rows(ws, string, number_of_rows=1):
     ws.cell(row=1, column=1).value = string
     ws.cell(row=1, column=1).font = header_font
 
+def set_size(ws, orientation="landscape"):
+    if orientation == "landscape":
+        ws.page_setup.orientation = ws.ORIENTATION_LANDSCAPE
+        ws.page_setup.paperSize = ws.PAPERSIZE_A4
+        ws.page_setup.fitToWidth = 1
+
 
 
 def login_required(view_func):
