@@ -2,7 +2,8 @@ from datetime import datetime
 
 from flask_login import UserMixin
 
-from app import bcrypt, db
+from app import db
+from extensions import bcrypt
 
 
 class User(UserMixin, db.Model):
@@ -10,12 +11,14 @@ class User(UserMixin, db.Model):
     __tablename__ = "users"
 
     id = db.Column(db.Integer, primary_key=True)
+    username = db.Column(db.String, unique=True, nullable=False)
     email = db.Column(db.String, unique=True, nullable=False)
     password = db.Column(db.String, nullable=False)
     created_on = db.Column(db.DateTime, nullable=False)
     is_admin = db.Column(db.Boolean, nullable=False, default=False)
 
-    def __init__(self, email, password, is_admin=False):
+    def __init__(self, username, email, password, is_admin=False):
+        self.username = username
         self.email = email
         self.password = bcrypt.generate_password_hash(password)
         self.created_on = datetime.now()

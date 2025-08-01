@@ -17,19 +17,22 @@ services:
     volumes:
       - uploads:/app/data
     depends_on:
-      - mongo
+      - db
     networks:
       - webproxy
 
-  mongo:
-    image: mongo:4.4
-    container_name: mongo
+  db:
+    image: postgres:15
+    container_name: pg-db
+    restart: always
     volumes:
-      - mongo_data:/data/db
+      - pg_data:/var/lib/postgresql/data
+    env_file:
+      - .env.db
     networks:
       - webproxy
     ports:
-      - "27017:27017"
+      - "5432:5432"
 
   nginx-proxy:
     image: jwilder/nginx-proxy
@@ -68,5 +71,4 @@ volumes:
   vhost:
   html:
   uploads:
-  mongo_data:
-
+  pg_data:

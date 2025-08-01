@@ -11,6 +11,7 @@ RUN apt-get update && apt-get install -y \
     libffi-dev \
     shared-mime-info \
     iputils-ping \
+    netcat-traditional \
     && rm -rf /var/lib/apt/lists/*
 
 ENV COMPOSE_BAKE=true \
@@ -26,6 +27,8 @@ WORKDIR /usr/src/app
 # Copy only dependency files first for better Docker cache utilization
 #COPY pyproject.toml uv.lock /usr/src/app/
 
+COPY ./entrypoint.sh .
+
 # Install dependencies using uv
 #RUN uv sync --locked
 RUN pip install --upgrade pip
@@ -34,6 +37,14 @@ RUN pip install -r requirements.txt
 
 # Now copy the rest of the application code
 COPY . /usr/src/app
+
+ENV FLASK_APP=app
+RUN chmod +x entrypoint.sh
+
+RUN flask db init
+
+ENTRYPOINT [ "./entrypoint.sh" ]
+
 
 # Path
 # ENV PATH="/app/.venv/bin:$PATH"

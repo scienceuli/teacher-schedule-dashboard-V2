@@ -20,20 +20,35 @@ from flask_pymongo import PyMongo
 
 import pandas as pd
 from schedule import TeacherSchedule
+from extensions import bcrypt
 from utils import get_file, allowed_file, create_folder, style_excel_output, set_alternating_column_background, insert_excel_rows, set_size, login_required
-
+from database import db
 from accounts.views import accounts_bp
+from seed import seed_users
+
+from accounts.models import User
 
 load_dotenv()
-load_dotenv(dotenv_path='.env.prod.db')
+load_dotenv(dotenv_path='.env.db')
 
 app = Flask(__name__)
 app.config.from_object("config.Config")
 app.secret_key = os.getenv("SECRET_KEY")
 
+
 project_path = os.path.dirname(os.path.realpath(__file__))
 print(f"Project path: {project_path}")
 print(f"UPLOAD_FOLDER: {os.getenv('UPLOAD_FOLDER')}")
+
+print("DB URI:", app.config.get("SQLALCHEMY_DATABASE_URI"))
+db.init_app(app)
+bcrypt.init_app(app)
+migrate = Migrate(app, db)
+app.register_blueprint(accounts_bp)
+
+with app.app_context():
+    db.create_all()
+    seed_users()
 
 @app.context_processor
 def inject_breadcrumb():
@@ -43,32 +58,11 @@ def inject_breadcrumb():
 upload_folder = os.path.join(project_path, os.getenv("UPLOAD_FOLDER"))
 app.config["UPLOAD_FOLDER"] = upload_folder
 
-#############################
-# Mongo database
-#############################
-
-# MongoDB connection setup
-app.config['MONGO_URI'] = 'mongodb://mongo:27017/teacherapp'
-mongo = PyMongo(app)
-
-# Make Mongo available globally
-app.mongo = mongo
-
-
-############################
-# user handling
-############################
-
-# Registering acount blueprint
-
-app.register_blueprint(accounts_bp)
 
 
 ############################
 # schedule configs
 ############################
-
-
 
 ALLOWED_EXTENSIONS = {"xls", "xlsx"}
 

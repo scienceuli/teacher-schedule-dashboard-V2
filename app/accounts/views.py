@@ -4,6 +4,7 @@ from . import accounts_bp
 from .forms import LoginForm, ChangePasswordForm
 
 from utils import login_required
+from .models import User
 
 @accounts_bp.route('/login', methods=['GET', 'POST'])
 def login():
@@ -11,7 +12,7 @@ def login():
     if form.validate_on_submit():
         username = form.username.data
         password = form.password.data
-        user = current_app.mongo.db.users.find_one({'username': username})
+        user = User.query.filter_by(username=username).first()
         if user and check_password_hash(user['password'], password):
             session['username'] = username
             return redirect(url_for('start'))
@@ -36,7 +37,7 @@ def change_password():
         current_password = form.current_password.data
         new_password = form.new_password.data
 
-        user = current_app.mongo.db.users.find_one({'username': username})
+        user = User.query.filter_by(username=username).first()
         if not user or not check_password_hash(user['password'], current_password):
             flash('Current password is incorrect.', 'danger')
         else:
