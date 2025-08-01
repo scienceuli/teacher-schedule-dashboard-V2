@@ -31,6 +31,21 @@
         <td></td>
         <td> {{ load['Bonus']}}</td>
       </tr>
+      <tr class="table-info">
+        <td>Sonderaufgaben</td>
+        <td></td>
+        <td> {{ load['Sonderaufgaben']}}</td>
+      </tr>
+      <tr class="table-info">
+        <td>Ags</td>
+        <td></td>
+        <td> {{ load['Ags-Std']}}</td>
+      </tr>
+      <tr class="table-info">
+        <td>Pool</td>
+        <td></td>
+        <td> {{ load['Poolstd-Std']}}</td>
+      </tr>
       <tr class="{% if compare.delta < 0 %}table-danger{% elif compare.delta > 0 %}table-success{% else %}table-warning{% endif %}">
         <td>Saldo</td>
         <td></td>
