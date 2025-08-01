@@ -157,6 +157,15 @@ def login_required(view_func):
     return wrapped_view
 
 
+def convert_empty_string_to_zero(value):
+    if type(value) == str and value == "":
+        return 0
+    elif type(value) == str:
+        return float(value)
+        
+    return value
+
+
 
 
 

@@ -5,7 +5,7 @@ from natsort import index_natsorted
 from collections import defaultdict
 
 
-from utils import is_valid_teacher, rename_columns
+from utils import is_valid_teacher, rename_columns, convert_empty_string_to_zero
 
 
 class TeacherSchedule:
@@ -215,17 +215,21 @@ class TeacherSchedule:
             .sum()
         )
 
+    
     def compare_load(self, teacher):
         """
         Return a summary of assigned vs expected load
         """
         load = self.get_teaching_load(teacher)
+        for value in load.values():
+            if type(value) == str:
+                print('teacher:', teacher, 'value:', value)
         actual = self.get_total_lessons(teacher)
         expected = (
-            load.get("Deputat 24/25", 0) 
-            - load.get("Anr", 0) 
+            load.get("Deputat 24/25", 0)
+            - load.get("Anr", 0)
             - load.get("Bonus", 0)
-            - load.get("Ags-Std", 0) 
+            - load.get("Ags-Std", 0)
             - load.get("Poolstd-Std", 0)
         )
 

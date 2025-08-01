@@ -100,10 +100,11 @@ def index():
 @app.route("/start")
 @login_required
 def start():
-    global ts
-    if not ts:
-        flash("No valid Excel file loaded. Please upload one.", "warning")
-        return redirect(url_for("upload_file"))
+    filepath = session.get('uploaded_file')
+    if not filepath or not os.path.exists(filepath):
+        flash("Keine Datei hochgeladen", "warning")
+        return redirect(url_for('upload_file'))
+    ts = TeacherSchedule(filepath) 
     class_names = ts.get_classes()
     teacher_names = ts.get_df().index.tolist()
     return render_template("start.html", classes=class_names, teachers=teacher_names)
@@ -112,7 +113,6 @@ def start():
 @app.route("/upload", methods=["GET", "POST"])
 @login_required
 def upload_file():
-    global ts
     if request.method == "POST":
         file = request.files.get("file")
         if file and allowed_file(file.filename, ALLOWED_EXTENSIONS):
@@ -122,8 +122,8 @@ def upload_file():
             file.save(filepath)
 
             session['uploaded_filename'] = filename
+            session['uploaded_file'] = filepath 
 
-            ts = TeacherSchedule(filepath)
             flash("Upload successful!", "success")
             return redirect(url_for("start"))
         else:
@@ -136,6 +136,12 @@ def upload_file():
 @app.route("/class/<cls>")
 @login_required
 def show_class(cls):
+    filepath = session.get('uploaded_file')
+    if not filepath or not os.path.exists(filepath):
+        flash("No file uploaded yet.", "warning")
+        return redirect(url_for('upload_file'))
+
+    ts = TeacherSchedule(filepath)
     records = ts.get_teachers_in_class(cls)
     main_teachers_for_class = ts.class_teachers.get(cls, {})
     main_teacher = main_teachers_for_class.get("main")
@@ -152,6 +158,12 @@ def show_class(cls):
 @app.route("/teacher/<name>")
 @login_required
 def show_teacher(name):
+    filepath = session.get('uploaded_file')
+    if not filepath or not os.path.exists(filepath):
+        flash("No file uploaded yet.", "warning")
+        return redirect(url_for('upload_file'))
+
+    ts = TeacherSchedule(filepath)
     records = ts.get_classes_of_teacher(name)
     total = ts.get_total_lessons(name)
     load = ts.get_teaching_load(name)
@@ -169,6 +181,12 @@ def show_teacher(name):
 @app.route("/teacher/<name>/load")
 @login_required
 def show_teacher_load(name):
+    filepath = session.get('uploaded_file')
+    if not filepath or not os.path.exists(filepath):
+        flash("No file uploaded yet.", "warning")
+        return redirect(url_for('upload_file'))
+
+    ts = TeacherSchedule(filepath)
     data = ts.compare_load(name)
 
     # Optional: enrich with anr and bonus separately
@@ -188,6 +206,12 @@ def show_teacher_load(name):
 @app.route("/teacher/load/export/excel")
 @login_required
 def export_teacher_load_excel():
+    filepath = session.get('uploaded_file')
+    if not filepath or not os.path.exists(filepath):
+        flash("No file uploaded yet.", "warning")
+        return redirect(url_for('upload_file'))
+
+    ts = TeacherSchedule(filepath)
     output = io.BytesIO()
     with pd.ExcelWriter(output, engine="openpyxl") as writer:
         for name in ts.get_df().index:
@@ -252,6 +276,12 @@ def export_teacher_load_excel():
 @app.route("/dashboard")
 @login_required
 def dashboard():
+    filepath = session.get('uploaded_file')
+    if not filepath or not os.path.exists(filepath):
+        flash("No file uploaded yet.", "warning")
+        return redirect(url_for('upload_file'))
+
+    ts = TeacherSchedule(filepath)
     rows = ts.get_dashboard_rows()
     return render_template("dashboard.html", rows=rows)
 
@@ -259,6 +289,12 @@ def dashboard():
 @app.route("/export/dashboard/csv")
 @login_required
 def export_dashboard_csv():
+    filepath = session.get('uploaded_file')
+    if not filepath or not os.path.exists(filepath):
+        flash("No file uploaded yet.", "warning")
+        return redirect(url_for('upload_file'))
+
+    ts = TeacherSchedule(filepath)
     rows = ts.get_dashboard_rows()
     if not rows:
         return "No data to export", 400
@@ -303,6 +339,12 @@ def export_dashboard_csv():
 @app.route("/export/dashboard/excel")
 @login_required
 def export_dashboard_excel():
+    filepath = session.get('uploaded_file')
+    if not filepath or not os.path.exists(filepath):
+        flash("No file uploaded yet.", "warning")
+        return redirect(url_for('upload_file'))
+
+    ts = TeacherSchedule(filepath)
     teacher_names = ts.get_df().index.tolist()
     rows = []
 
@@ -351,6 +393,12 @@ def export_dashboard_excel():
 @app.route("/export/class/<cls>.csv")
 @login_required
 def export_class_csv(cls):
+    filepath = session.get('uploaded_file')
+    if not filepath or not os.path.exists(filepath):
+        flash("No file uploaded yet.", "warning")
+        return redirect(url_for('upload_file'))
+
+    ts = TeacherSchedule(filepath)
     df = ts.get_df(reset_index=True)
     subset = ts.get_teachers_in_class(cls)
     if not subset:
@@ -371,6 +419,12 @@ def export_class_csv(cls):
 @app.route("/export/teacher/<name>.csv")
 @login_required
 def export_teacher_csv(name):
+    filepath = session.get('uploaded_file')
+    if not filepath or not os.path.exists(filepath):
+        flash("No file uploaded yet.", "warning")
+        return redirect(url_for('upload_file'))
+
+    ts = TeacherSchedule(filepath)
     subset = ts.get_classes_of_teacher(name)
     if not subset:
         return "No data", 404
@@ -390,6 +444,12 @@ def export_teacher_csv(name):
 @app.route("/summary")
 @login_required
 def class_summary():
+    filepath = session.get('uploaded_file')
+    if not filepath or not os.path.exists(filepath):
+        flash("No file uploaded yet.", "warning")
+        return redirect(url_for('upload_file'))
+
+    ts = TeacherSchedule(filepath)
     sort = request.args.get("sort", "teacher") 
     print("sort:", sort)
     df_list = ts.build_wide_class_table(sort)
@@ -403,6 +463,12 @@ def class_summary():
 @app.route("/summary/export/<sort>")
 @login_required
 def export_summary_csv(sort):
+    filepath = session.get('uploaded_file')
+    if not filepath or not os.path.exists(filepath):
+        flash("No file uploaded yet.", "warning")
+        return redirect(url_for('upload_file'))
+
+    ts = TeacherSchedule(filepath)
     df = ts.build_wide_class_table(sort)
     csv_data = io.StringIO()
     df.to_csv(csv_data, index=False)
@@ -420,6 +486,12 @@ import io
 @app.route("/summary/export/excel/")
 @login_required
 def export_summary_excel():
+    filepath = session.get('uploaded_file')
+    if not filepath or not os.path.exists(filepath):
+        flash("No file uploaded yet.", "warning")
+        return redirect(url_for('upload_file'))
+
+    ts = TeacherSchedule(filepath)
     sort = request.args.get("sort", "teacher") 
     print("sort:", sort)
     tables_by_grade = ts.build_wide_class_table(sort)
@@ -447,6 +519,12 @@ def export_summary_excel():
 @app.route("/summary/export/pdf")
 @login_required
 def export_summary_pdf():
+    filepath = session.get('uploaded_file')
+    if not filepath or not os.path.exists(filepath):
+        flash("No file uploaded yet.", "warning")
+        return redirect(url_for('upload_file'))
+
+    ts = TeacherSchedule(filepath)
     sort = request.args.get("sort", "teacher") 
 
     grade_tables = ts.build_wide_class_table(sort)  # list of {'grade': '5', 'df': DataFrame}
@@ -464,6 +542,12 @@ def export_summary_pdf():
 @app.route("/export/schedule.csv")
 @login_required
 def export_schedule_csv():
+    filepath = session.get('uploaded_file')
+    if not filepath or not os.path.exists(filepath):
+        flash("No file uploaded yet.", "warning")
+        return redirect(url_for('upload_file'))
+
+    ts = TeacherSchedule(filepath)
     long_df = ts.get_teacher_schedule_long()  # Your method to get long format DataFrame
 
     # Convert DataFrame to CSV string
