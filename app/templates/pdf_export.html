@@ -19,7 +19,9 @@
 <body>
   {% for block in grade_tables %}
     <div class="grade-block">
-      <p><strong>Jahrgang {{ block.grade }}</strong></p>
+      <p><strong>Jahrgang {{ block.grade }}</strong>
+      <span style="float:right;">{{ session.uploaded_filename}}</span>
+      </p>
       {{ block.df.to_html(classes="table", index=False, border=1) | safe }}
     </div>
   {% endfor %}

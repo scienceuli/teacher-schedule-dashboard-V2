@@ -26,7 +26,7 @@
                     <a class="nav-link active" aria-current="page" href="{{ url_for('dashboard')}}">Dashboard</a>
                     <a class="nav-link active" aria-current="page" href="{{ url_for('class_summary')}}">Alle Klassen</a>
                     <a class="nav-link active" aria-current="page" href="{{ url_for('upload_file')}}">Excel hochladen</a>
-                    <a class="nav-link active" aria-current="page" href="{{ url_for('export_schedule_csv')}}">Export alle Lehrer</a>
+                    <a class="nav-link active" aria-current="page" href="{{ url_for('export_schedule_xlsx')}}">Export alle Lehrer</a>
                     <a class="nav-link active" aria-current="page" href="{{ url_for('export_teacher_load_excel')}}">Export Stundenbilanz</a>
                 </div>
                 {% endif %}
@@ -41,8 +41,8 @@
             </div>
         </div>
     </nav>
-    {% if uploaded_filename and session.username %}
-    <div class='text-end'>📁 Uploaded: {{ uploaded_filename }}</div>
+    {% if session.uploaded_file and session.username %}
+    <div class='text-end'>📁 Uploaded: {{ session.uploaded_filename }}</div>
     {% endif %}
     {% with messages = get_flashed_messages(with_categories=true) %}
     {% if messages %}

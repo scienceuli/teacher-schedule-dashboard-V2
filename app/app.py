@@ -74,17 +74,6 @@ ALLOWED_EXTENSIONS = {"xls", "xlsx"}
 
 create_folder(upload_folder)
 
-excel_file = get_file(upload_folder, ALLOWED_EXTENSIONS)
-print(f"Excel file: {excel_file}")
-
-if excel_file:
-    ts = TeacherSchedule(excel_file)
-    print(f"Loaded Excel from: {excel_file}")
-else:
-    ts = None
-    print("⚠️ No Excel file found. Waiting for upload.")
-
-
 
 
 #############################
@@ -560,6 +549,30 @@ def export_schedule_csv():
         mimetype="text/csv",
         headers={"Content-disposition": "attachment; filename=teacher_schedule.csv"}
     )
+
+@app.route("/export/schedule.xlsx")
+@login_required
+def export_schedule_xlsx():
+    filepath = session.get('uploaded_file')
+    if not filepath or not os.path.exists(filepath):
+        flash("No file uploaded yet.", "warning")
+        return redirect(url_for('upload_file'))
+
+    ts = TeacherSchedule(filepath)
+    long_df = ts.get_teacher_schedule_long()  # Your method to get long format DataFrame
+
+    # Convert DataFrame to Excel file
+    excel_buffer = io.BytesIO()
+    with pd.ExcelWriter(excel_buffer) as writer:
+        long_df.to_excel(writer, index=False)
+
+    # Create a Flask Response with Excel file
+    return Response(
+        excel_buffer.getvalue(),
+        mimetype="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+        headers={"Content-disposition": "attachment; filename=teacher_schedule.xlsx"}
+    )
+
 
 
 if __name__ == "__main__":
